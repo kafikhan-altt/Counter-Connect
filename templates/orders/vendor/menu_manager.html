@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Menu & Counter Manager — CounterConnect{% endblock %}
+
+{% block content %}
+<div class="py-3">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <a href="{% url 'orders:vendor_dashboard' %}" class="btn btn-sm btn-link text-decoration-none text-muted ps-0">
+                <i class="bi bi-arrow-left me-1"></i>Back to Orders Dashboard
+            </a>
+            <h3 class="fw-bold text-dark mb-0">Live Menu & Stall Manager</h3>
+            <p class="text-muted small mb-0">Toggle counter status or mark items sold out in one tap.</p>
+        </div>
+    </div>
+
+    <!-- Counters List -->
+    <div class="d-flex flex-column gap-4">
+        {% for biz in businesses %}
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                <!-- Counter Status Header -->
+                <div class="card-header bg-white border-bottom p-3 p-md-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h4 class="fw-bold text-dark mb-0">{{ biz.name }}</h4>
+                            <span class="badge bg-secondary-subtle text-secondary">{{ biz.category }}</span>
+                        </div>
+                        <small class="text-muted">Food Court: {{ biz.location.name }} ({{ biz.location.city }})</small>
+                    </div>
+
+                    <!-- Stall Open / Closed Toggle -->
+                    <div class="d-flex align-items-center gap-2">
+                        {% if biz.is_open %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                                <i class="bi bi-door-open-fill me-1"></i>Counter is OPEN
+                            </span>
+                            <form action="{% url 'orders:vendor_toggle_counter' biz.id %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm fw-semibold" onclick="return confirm('Close counter? Customers will not be able to order.');">
+                                    Close Counter
+                                </button>
+                            </form>
+                        {% else %}
+                            <span class="badge bg-danger px-3 py-2">
+                                <i class="bi bi-door-closed-fill me-1"></i>Counter is CLOSED
+                            </span>
+                            <form action="{% url 'orders:vendor_toggle_counter' biz.id %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm fw-semibold">
+                                    Open Counter
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Menu Items Table -->
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Item</th>
+                                    <th>Price</th>
+                                    <th>Availability</th>
+                                    <th class="text-end pe-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in biz.menu_items.all %}
+                                    <tr class="{% if not item.is_available %}table-light opacity-75{% endif %}">
+                                        <td class="ps-3">
+                                            <div class="d-flex align-items-center gap-2">
+                                                {% if item.is_veg %}
+                                                    <span class="veg-badge" title="Vegetarian"></span>
+                                                {% else %}
+                                                    <span class="non-veg-badge" title="Non-Vegetarian"></span>
+                                                {% endif %}
+                                                <div>
+                                                    <strong class="text-dark">{{ item.name }}</strong>
+                                                    {% if item.description %}
+                                                        <div class="text-muted small">{{ item.description }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><strong>₹{{ item.price }}</strong></td>
+                                        <td>
+                                            {% if item.is_available %}
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                                    Available
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                                    Sold Out
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end pe-3">
+                                            <form action="{% url 'orders:vendor_toggle_item' item.id %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                {% if item.is_available %}
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                        <i class="bi bi-slash-circle me-1"></i>Mark Sold Out
+                                                    </button>
+                                                {% else %}
+                                                    <button type="submit" class="btn btn-outline-success btn-sm">
+                                                        <i class="bi bi-check2 me-1"></i>Mark Available
+                                                    </button>
+                                                {% endif %}
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted">No items in this counter's menu.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

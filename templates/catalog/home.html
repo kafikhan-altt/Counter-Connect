@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}CounterConnect — Food Court Pre-Ordering{% endblock %}
+
+{% block content %}
+<div class="py-4 text-center">
+    <div class="badge bg-warning text-dark mb-2 px-3 py-2 fs-6 fw-bold">One Location • Every Counter • One Page</div>
+    <h1 class="display-6 fw-bold text-dark mb-2">Order from multiple food counters in one go</h1>
+    <p class="text-muted lead fs-6 mx-auto mb-4" style="max-width: 580px;">
+        Skip waiting in 3 different queues. Pick dosa from South Indian, noodles from Chinese, and juice — all in one pre-order. Walk in when it's ready.
+    </p>
+
+    <!-- Search Box -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-12 col-md-8 col-lg-6">
+            <form action="{% url 'catalog:search' %}" method="get" class="card shadow-sm p-2 border-0 rounded-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-0 text-muted ps-3">
+                        <i class="bi bi-search fs-5"></i>
+                    </span>
+                    <input type="text" name="q" class="form-control border-0 shadow-none ps-2" 
+                           placeholder="Search food court or city (e.g. Surya Mall, Bhilai)" 
+                           required autocomplete="off">
+                    <button class="btn btn-warning px-4 fw-semibold rounded-3" type="submit">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Active Locations Grid -->
+<div class="mb-5">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="fw-bold mb-0 text-dark">Explore Food Courts & Markets</h4>
+        <span class="badge bg-secondary-subtle text-secondary">{{ locations.count }} available</span>
+    </div>
+
+    <div class="row g-3">
+        {% for loc in locations %}
+            <div class="col-12 col-md-6 col-lg-6">
+                <div class="card h-100 border-0 shadow-sm rounded-4 p-3 bg-white hover-shadow transition">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="badge bg-light text-primary border mb-1">
+                                <i class="bi bi-geo-alt me-1"></i>{{ loc.city }}
+                            </span>
+                            <h5 class="fw-bold mb-1">
+                                <a href="{% url 'catalog:location_detail' loc.slug %}" class="text-decoration-none text-dark">
+                                    {{ loc.name }}
+                                </a>
+                            </h5>
+                            <p class="text-muted small mb-2">{{ loc.address }}</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-1 mb-3">
+                        {% for biz in loc.businesses.all %}
+                            <span class="badge bg-light text-dark border small fw-normal">
+                                {{ biz.name }} <span class="text-muted">({{ biz.category }})</span>
+                            </span>
+                        {% empty %}
+                            <span class="text-muted small">No counters listed yet</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">{{ loc.businesses.count }} counters</span>
+                        <a href="{% url 'catalog:location_detail' loc.slug %}" class="btn btn-outline-warning btn-sm fw-semibold">
+                            View Live Menu <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-shop fs-1 text-secondary mb-2 d-block"></i>
+                <p>No active food courts found.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

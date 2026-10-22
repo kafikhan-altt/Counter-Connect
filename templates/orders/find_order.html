@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Find My Pre-Order — CounterConnect{% endblock %}
+
+{% block content %}
+<div class="py-5" style="max-width: 480px; margin: 0 auto;">
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="text-center mb-4">
+            <span class="badge bg-warning text-dark p-2 rounded-circle mb-2">
+                <i class="bi bi-search fs-3"></i>
+            </span>
+            <h4 class="fw-bold text-dark mb-1">Find My Order</h4>
+            <p class="text-muted small">
+                Check the live status of today's pre-order using your phone number and 4-character pickup code.
+            </p>
+        </div>
+
+        <form action="{% url 'orders:find_order' %}" method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="phone" class="form-label fw-semibold text-dark">Phone Number</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted">+91</span>
+                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="9876543210" required pattern="^[6-9]\d{9}$">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="pickup_code" class="form-label fw-semibold text-dark">4-Character Pickup Code</label>
+                <input type="text" class="form-control text-uppercase text-center fw-bold fs-4" 
+                       id="pickup_code" name="pickup_code" placeholder="K7M2" maxlength="4" required style="letter-spacing: 4px;">
+                <div class="form-text text-center">Found on your order confirmation screen.</div>
+            </div>
+
+            <button type="submit" class="btn btn-warning w-100 fw-bold py-2 rounded-3 shadow-sm">
+                Find My Order <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+
+{% block title %}Vendor Dashboard — CounterConnect{% endblock %}
+
+{% block content %}
+<div class="py-3">
+    <!-- Header with Counter Name and Action Bar -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 mb-4 bg-white">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <span class="badge bg-warning text-dark mb-1">
+                    <i class="bi bi-shop me-1"></i>Vendor Portal
+                </span>
+                <h3 class="fw-bold text-dark mb-0">
+                    {% for b in businesses %}{{ b.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </h3>
+                <small class="text-muted">
+                    Location: <strong>{{ businesses.first.location.name }}</strong> ({{ businesses.first.location.city }})
+                </small>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <a href="{% url 'orders:vendor_menu_manager' %}" class="btn btn-outline-dark btn-sm fw-semibold">
+                    <i class="bi bi-sliders me-1"></i>Menu & Counter Manager
+                </a>
+            </div>
+        </div>
+
+        <!-- Collect by Pickup Code Box -->
+        <div class="mt-4 p-3 bg-light rounded-3 border">
+            <form action="{% url 'orders:vendor_collect' %}" method="get" class="row g-2 align-items-center">
+                <div class="col-12 col-md-auto">
+                    <label for="pickup_code_input" class="fw-bold small text-dark mb-0">
+                        <i class="bi bi-upc-scan me-1 text-warning"></i>Collect by Pickup Code:
+                    </label>
+                </div>
+                <div class="col-8 col-md-4 col-lg-3">
+                    <input type="text" name="code" id="pickup_code_input" 
+                           class="form-control form-control-sm text-uppercase fw-bold text-center" 
+                           placeholder="K7M2" maxlength="4" required style="letter-spacing: 3px;">
+                </div>
+                <div class="col-4 col-md-auto">
+                    <button type="submit" class="btn btn-warning btn-sm fw-bold px-3">
+                        Look Up
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Status Tabs -->
+    <ul class="nav nav-pills mb-4 gap-2 flex-nowrap overflow-auto pb-2" id="orderTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold position-relative rounded-pill px-3 py-2" id="new-tab" data-bs-toggle="tab" data-bs-target="#new-orders" type="button" role="tab">
+                <i class="bi bi-bell me-1"></i>New Orders
+                <span class="badge rounded-pill bg-danger ms-1" id="badge-new">{{ new_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold position-relative rounded-pill px-3 py-2" id="preparing-tab" data-bs-toggle="tab" data-bs-target="#preparing-orders" type="button" role="tab">
+                <i class="bi bi-fire me-1"></i>Preparing
+                <span class="badge rounded-pill bg-info text-dark ms-1" id="badge-preparing">{{ preparing_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold position-relative rounded-pill px-3 py-2" id="ready-tab" data-bs-toggle="tab" data-bs-target="#ready-orders" type="button" role="tab">
+                <i class="bi bi-check-circle me-1"></i>Ready for Pickup
+                <span class="badge rounded-pill bg-success ms-1" id="badge-ready">{{ ready_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold position-relative rounded-pill px-3 py-2 text-secondary" id="done-tab" data-bs-toggle="tab" data-bs-target="#done-orders" type="button" role="tab">
+                <i class="bi bi-archive me-1"></i>History
+                <span class="badge rounded-pill bg-secondary ms-1">{{ done_count }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="orderTabsContent">
+        <!-- 1. NEW ORDERS TAB -->
+        <div class="tab-pane fade show active" id="new-orders" role="tabpanel">
+            <div class="row g-3">
+                {% for vo in new_orders %}
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="card h-100 border-warning border-2 shadow-sm rounded-4 overflow-hidden bg-white">
+                            <div class="card-header bg-warning-subtle p-3 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-warning text-dark fw-bold fs-6 tracking-wide">
+                                        #{{ vo.order.pickup_code }}
+                                    </span>
+                                </div>
+                                <span class="text-muted small">
+                                    <i class="bi bi-clock me-1"></i>{{ vo.created_at|timesince }} ago
+                                </span>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="mb-2 text-muted small">
+                                    Customer: <strong class="text-dark">{{ vo.order.customer_name }}</strong> 
+                                    (••{{ vo.order.customer_phone|slice:"-4:" }})
+                                </div>
+                                <ul class="list-unstyled border-top pt-2 mb-3">
+                                    {% for item in vo.items.all %}
+                                        <li class="d-flex justify-content-between py-1 small">
+                                            <strong>{{ item.quantity }}x {{ item.item_name }}</strong>
+                                            <span class="text-muted">₹{{ item.line_total }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                <div class="text-end fw-bold mb-3">
+                                    Subtotal: <span class="text-success">₹{{ vo.subtotal }}</span>
+                                </div>
+
+                                <div class="d-flex flex-column gap-2">
+                                    <form action="{% url 'orders:vendor_order_transition' vo.id %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="new_status" value="PREPARING">
+                                        <button type="submit" class="btn btn-warning w-100 fw-bold">
+                                            <i class="bi bi-play-fill me-1"></i>Accept & Start Prep
+                                        </button>
+                                    </form>
+
+                                    <!-- Reject Accordion/Button -->
+                                    <button class="btn btn-outline-danger btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#reject-box-{{ vo.id }}">
+                                        Reject Part...
+                                    </button>
+                                    <div class="collapse mt-2" id="reject-box-{{ vo.id }}">
+                                        <form action="{% url 'orders:vendor_order_transition' vo.id %}" method="post" class="p-2 border rounded-3 bg-light">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="new_status" value="REJECTED">
+                                            <input type="text" name="reject_reason" class="form-control form-control-sm mb-2" placeholder="Reason (e.g. item ran out)" required maxlength="140">
+                                            <button type="submit" class="btn btn-danger btn-sm w-100 fw-bold">Confirm Reject</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12 text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 mb-2 d-block"></i>
+                        <p>No new orders right now.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 2. PREPARING TAB -->
+        <div class="tab-pane fade" id="preparing-orders" role="tabpanel">
+            <div class="row g-3">
+                {% for vo in preparing_orders %}
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="card h-100 border-info border-2 shadow-sm rounded-4 overflow-hidden bg-white">
+                            <div class="card-header bg-info-subtle p-3 d-flex justify-content-between align-items-center">
+                                <span class="badge bg-info text-dark fw-bold fs-6">
+                                    #{{ vo.order.pickup_code }}
+                                </span>
+                                <span class="badge bg-light text-dark border">Preparing</span>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="mb-2 text-muted small">
+                                    Customer: <strong class="text-dark">{{ vo.order.customer_name }}</strong> 
+                                    (••{{ vo.order.customer_phone|slice:"-4:" }})
+                                </div>
+                                <ul class="list-unstyled border-top pt-2 mb-3">
+                                    {% for item in vo.items.all %}
+                                        <li class="d-flex justify-content-between py-1 small">
+                                            <strong>{{ item.quantity }}x {{ item.item_name }}</strong>
+                                            <span class="text-muted">₹{{ item.line_total }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                <div class="text-end fw-bold mb-3">
+                                    Subtotal: <span class="text-success">₹{{ vo.subtotal }}</span>
+                                </div>
+
+                                <div class="d-flex flex-column gap-2">
+                                    <form action="{% url 'orders:vendor_order_transition' vo.id %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="new_status" value="READY">
+                                        <button type="submit" class="btn btn-success w-100 fw-bold">
+                                            <i class="bi bi-check-lg me-1"></i>Mark Food Ready
+                                        </button>
+                                    </form>
+
+                                    <!-- Reject Option if ran out during prep -->
+                                    <button class="btn btn-outline-danger btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#reject-prep-{{ vo.id }}">
+                                        Reject (Ran Out)...
+                                    </button>
+                                    <div class="collapse mt-2" id="reject-prep-{{ vo.id }}">
+                                        <form action="{% url 'orders:vendor_order_transition' vo.id %}" method="post" class="p-2 border rounded-3 bg-light">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="new_status" value="REJECTED">
+                                            <input type="text" name="reject_reason" class="form-control form-control-sm mb-2" placeholder="Reason (e.g. ingredients finished)" required maxlength="140">
+                                            <button type="submit" class="btn btn-danger btn-sm w-100 fw-bold">Confirm Reject</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12 text-center py-5 text-muted">
+                        <i class="bi bi-check2-circle fs-1 mb-2 d-block"></i>
+                        <p>No orders currently being prepared.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 3. READY TAB -->
+        <div class="tab-pane fade" id="ready-orders" role="tabpanel">
+            <div class="row g-3">
+                {% for vo in ready_orders %}
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="card h-100 border-success border-2 shadow-sm rounded-4 overflow-hidden bg-white">
+                            <div class="card-header bg-success-subtle p-3 d-flex justify-content-between align-items-center">
+                                <span class="badge bg-success fw-bold fs-6">
+                                    #{{ vo.order.pickup_code }}
+                                </span>
+                                <span class="badge bg-success">Awaiting Customer</span>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="mb-2 text-muted small">
+                                    Customer: <strong class="text-dark">{{ vo.order.customer_name }}</strong>
+                                </div>
+                                <ul class="list-unstyled border-top pt-2 mb-3">
+                                    {% for item in vo.items.all %}
+                                        <li class="d-flex justify-content-between py-1 small">
+                                            <span>{{ item.quantity }}x {{ item.item_name }}</span>
+                                            <span class="text-muted">₹{{ item.line_total }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                <div class="text-end fw-bold mb-3">
+                                    Subtotal to collect: <span class="text-success fs-5">₹{{ vo.subtotal }}</span>
+                                </div>
+
+                                <form action="{% url 'orders:vendor_order_transition' vo.id %}" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="new_status" value="COLLECTED">
+                                    <button type="submit" class="btn btn-dark w-100 fw-bold py-2">
+                                        <i class="bi bi-bag-check me-1"></i>Confirm Customer Picked Up
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12 text-center py-5 text-muted">
+                        <i class="bi bi-bag-dash fs-1 mb-2 d-block"></i>
+                        <p>No orders currently waiting for pickup.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 4. HISTORY / DONE TAB -->
+        <div class="tab-pane fade" id="done-orders" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Pickup Code</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Subtotal</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vo in done_orders %}
+                                <tr>
+                                    <td><strong>#{{ vo.order.pickup_code }}</strong></td>
+                                    <td>{{ vo.order.customer_name }}</td>
+                                    <td>
+                                        <small>
+                                            {% for item in vo.items.all %}
+                                                {{ item.quantity }}x {{ item.item_name }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </small>
+                                    </td>
+                                    <td><strong>₹{{ vo.subtotal }}</strong></td>
+                                    <td>
+                                        {% if vo.status == 'COLLECTED' %}
+                                            <span class="badge bg-secondary">Collected</span>
+                                        {% elif vo.status == 'REJECTED' %}
+                                            <span class="badge bg-danger" title="{{ vo.reject_reason }}">Rejected</span>
+                                        {% elif vo.status == 'CANCELLED' %}
+                                            <span class="badge bg-secondary">Cancelled</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-muted small">{{ vo.updated_at|date:"h:i A" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No completed or cancelled orders yet today.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Vendor dashboard polling every 5s
+const ordersJsonUrl = "{% url 'orders:vendor_orders_json' %}";
+let currentNewCount = {{ new_count }};
+let currentPrepCount = {{ preparing_count }};
+let currentReadyCount = {{ ready_count }};
+
+setInterval(function() {
+    // Only auto-reload if vendor is not actively typing in an open input/modal
+    const activeElement = document.activeElement;
+    const isTyping = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+
+    if (!isTyping) {
+        fetch(ordersJsonUrl)
+            .then(res => res.json())
+            .then(data => {
+                if (data.new_count !== currentNewCount || 
+                    data.preparing_count !== currentPrepCount || 
+                    data.ready_count !== currentReadyCount) {
+                    location.reload();
+                }
+            })
+            .catch(err => console.log('Vendor polling err:', err));
+    }
+}, 5000);
+</script>
+{% endblock %}

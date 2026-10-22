@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Collect Order by Code — CounterConnect{% endblock %}
+
+{% block content %}
+<div class="py-4" style="max-width: 580px; margin: 0 auto;">
+    <div class="mb-3">
+        <a href="{% url 'orders:vendor_dashboard' %}" class="btn btn-sm btn-link text-decoration-none text-muted ps-0">
+            <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+        </a>
+        <h4 class="fw-bold text-dark mb-0">Collect by Pickup Code</h4>
+    </div>
+
+    <!-- Search Input Card -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <form method="get" action="{% url 'orders:vendor_collect' %}">
+            <label for="code" class="form-label fw-semibold text-dark">Enter 4-Character Pickup Code</label>
+            <div class="input-group mb-2">
+                <input type="text" name="code" id="code" value="{{ code }}" 
+                       class="form-control text-uppercase text-center fw-bold fs-4" 
+                       placeholder="K7M2" maxlength="4" required style="letter-spacing: 4px;" autofocus>
+                <button class="btn btn-warning fw-bold px-4" type="submit">Verify Code</button>
+            </div>
+            <div class="form-text">Customer presents this code on their phone or token.</div>
+        </form>
+    </div>
+
+    <!-- Search Result -->
+    {% if lookup_done %}
+        {% if sub_order %}
+            <div class="card border-0 shadow rounded-4 p-4 bg-white">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                    <div>
+                        <span class="badge bg-warning text-dark fs-5 fw-bold px-3 py-2">
+                            #{{ sub_order.order.pickup_code }}
+                        </span>
+                        <div class="text-muted small mt-1">
+                            Customer: <strong class="text-dark">{{ sub_order.order.customer_name }}</strong>
+                        </div>
+                    </div>
+                    <div>
+                        {% if sub_order.status == 'READY' %}
+                            <span class="badge bg-success px-3 py-2 fs-6">Ready for Pickup</span>
+                        {% elif sub_order.status == 'PREPARING' %}
+                            <span class="badge bg-info text-dark px-3 py-2 fs-6">Preparing</span>
+                        {% elif sub_order.status == 'PLACED' %}
+                            <span class="badge bg-warning text-dark px-3 py-2 fs-6">Placed</span>
+                        {% elif sub_order.status == 'COLLECTED' %}
+                            <span class="badge bg-secondary px-3 py-2 fs-6">Already Collected</span>
+                        {% elif sub_order.status == 'REJECTED' %}
+                            <span class="badge bg-danger px-3 py-2 fs-6">Rejected</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Stall Items only (Vendor Isolation) -->
+                <h6 class="fw-bold text-dark mb-2">Items for {{ sub_order.business.name }}:</h6>
+                <ul class="list-group list-group-flush mb-3">
+                    {% for item in sub_order.items.all %}
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span><strong>{{ item.quantity }}x</strong> {{ item.item_name }}</span>
+                            <span class="fw-semibold">₹{{ item.line_total }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top mb-4">
+                    <span class="text-muted">Subtotal to Collect:</span>
+                    <span class="fs-4 fw-bold text-success">₹{{ sub_order.subtotal }}</span>
+                </div>
+
+                <!-- Action depending on status -->
+                {% if sub_order.status == 'READY' %}
+                    <form method="post" action="{% url 'orders:vendor_collect' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="code" value="{{ sub_order.order.pickup_code }}">
+                        <input type="hidden" name="action" value="collect">
+                        <button type="submit" class="btn btn-success w-100 fw-bold py-3 fs-6 rounded-3 shadow">
+                            <i class="bi bi-check2-circle me-1"></i>Hand Over Food & Mark Collected
+                        </button>
+                    </form>
+                {% elif sub_order.status == 'PREPARING' or sub_order.status == 'PLACED' %}
+                    <div class="alert alert-warning text-center fw-semibold mb-0">
+                        <i class="bi bi-hourglass-split me-1"></i>Not ready yet!
+                        <div class="small fw-normal text-muted mt-1">
+                            This order is still in status: <strong>{{ sub_order.get_status_display }}</strong>. Mark it ready on your dashboard first.
+                        </div>
+                    </div>
+                {% elif sub_order.status == 'COLLECTED' %}
+                    <div class="alert alert-secondary text-center fw-semibold mb-0">
+                        <i class="bi bi-check2-all me-1"></i>This sub-order was already collected.
+                    </div>
+                {% elif sub_order.status == 'REJECTED' %}
+                    <div class="alert alert-danger text-center fw-semibold mb-0">
+                        <i class="bi bi-x-octagon me-1"></i>This order part was rejected: {{ sub_order.reject_reason }}
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center bg-white">
+                <i class="bi bi-exclamation-circle text-muted fs-1 mb-2 d-block"></i>
+                <h5 class="fw-bold text-dark">No matching order found</h5>
+                <p class="text-muted small mb-0">
+                    No active order with code "<strong>{{ code }}</strong>" exists for your counter today.
+                </p>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results for "{{ query }}" — CounterConnect{% endblock %}
+
+{% block content %}
+<div class="py-3">
+    <!-- Back & Search Form -->
+    <div class="mb-4">
+        <a href="{% url 'catalog:home' %}" class="btn btn-sm btn-link text-decoration-none text-muted ps-0 mb-2">
+            <i class="bi bi-arrow-left me-1"></i>All Food Courts
+        </a>
+        <form action="{% url 'catalog:search' %}" method="get" class="card shadow-sm p-2 border-0 rounded-4">
+            <div class="input-group">
+                <span class="input-group-text bg-transparent border-0 text-muted ps-3">
+                    <i class="bi bi-search fs-5"></i>
+                </span>
+                <input type="text" name="q" value="{{ query }}" class="form-control border-0 shadow-none ps-2" 
+                       placeholder="Search food court or city..." required>
+                <button class="btn btn-warning px-4 fw-semibold rounded-3" type="submit">Search</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold mb-0 text-dark">
+            {% if query %}
+                Results for "<span class="text-primary">{{ query }}</span>"
+            {% else %}
+                All Food Courts
+            {% endif %}
+        </h4>
+        <span class="badge bg-secondary-subtle text-secondary">{{ results.count }} found</span>
+    </div>
+
+    <!-- Results Grid -->
+    <div class="row g-3">
+        {% for loc in results %}
+            <div class="col-12 col-md-6">
+                <div class="card h-100 border-0 shadow-sm rounded-4 p-3 bg-white">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="badge bg-light text-primary border mb-1">
+                                <i class="bi bi-geo-alt me-1"></i>{{ loc.city }}
+                            </span>
+                            <h5 class="fw-bold mb-1">
+                                <a href="{% url 'catalog:location_detail' loc.slug %}" class="text-decoration-none text-dark">
+                                    {{ loc.name }}
+                                </a>
+                            </h5>
+                            <p class="text-muted small mb-2">{{ loc.address }}</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-1 mb-3">
+                        {% for biz in loc.businesses.all %}
+                            <span class="badge bg-light text-dark border small fw-normal">
+                                {{ biz.name }}
+                            </span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">{{ loc.businesses.count }} counters</span>
+                        <a href="{% url 'catalog:location_detail' loc.slug %}" class="btn btn-warning btn-sm fw-semibold">
+                            Open Food Court <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-5">
+                <div class="p-4 bg-white rounded-4 shadow-sm mx-auto" style="max-width: 450px;">
+                    <i class="bi bi-emoji-neutral fs-1 text-secondary mb-2 d-block"></i>
+                    <h5 class="fw-bold text-dark">No food court found</h5>
+                    <p class="text-muted small mb-3">
+                        We couldn't find any food court matching "<strong>{{ query }}</strong>". Try searching for "Surya" or "Raipur".
+                    </p>
+                    <a href="{% url 'catalog:home' %}" class="btn btn-outline-dark btn-sm">
+                        View All Locations
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

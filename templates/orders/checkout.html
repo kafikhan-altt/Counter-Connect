@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout & Confirm Pre-Order — CounterConnect{% endblock %}
+
+{% block content %}
+<div class="py-3" style="max-width: 650px; margin: 0 auto;">
+    <div class="mb-3">
+        <a href="{% url 'orders:cart_view' %}" class="btn btn-sm btn-link text-decoration-none text-muted ps-0">
+            <i class="bi bi-arrow-left me-1"></i>Back to Cart
+        </a>
+        <h3 class="fw-bold text-dark mb-1">Confirm Pre-Order</h3>
+        <p class="text-muted small">
+            Food Court: <strong>{{ cart_details.location.name }}</strong> ({{ cart_details.location.city }})
+        </p>
+    </div>
+
+    <!-- Order Review Card -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+        <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Order Summary</h6>
+        <div class="d-flex flex-column gap-3 mb-3">
+            {% for group in cart_details.groups %}
+                <div class="border rounded-3 p-2 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="badge bg-dark">{{ group.business.name }}</span>
+                        <span class="fw-bold small text-dark">Subtotal: ₹{{ group.subtotal }}</span>
+                    </div>
+                    <ul class="list-unstyled small mb-0 ps-1 text-muted">
+                        {% for line in group.items %}
+                            <li>• {{ line.quantity }}x {{ line.item.name }} (₹{{ line.line_total }})</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+            <span class="fw-semibold text-dark">Total Payable at Pickup:</span>
+            <span class="fs-4 fw-bold text-success">₹{{ cart_details.grand_total }}</span>
+        </div>
+    </div>
+
+    <!-- Guest Details Form -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <h5 class="fw-bold text-dark mb-3">Pickup Contact Details</h5>
+        <p class="text-muted small mb-3">
+            No account needed. We only need your name and phone number to generate your single pickup code.
+        </p>
+
+        <form action="{% url 'orders:checkout_view' %}" method="post" id="checkout-form" onsubmit="const btn = document.getElementById('submit-order-btn'); btn.disabled = true; btn.innerHTML = '<span class=\'spinner-border spinner-border-sm me-1\'></span>Placing Order...';">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="customer_name" class="form-label fw-semibold text-dark">Your Name</label>
+                <input type="text" class="form-control rounded-3" id="customer_name" name="customer_name" 
+                       value="{{ customer_name|default:'' }}" placeholder="e.g. Riya Sharma" required minlength="2" maxlength="50">
+            </div>
+
+            <div class="mb-3">
+                <label for="customer_phone" class="form-label fw-semibold text-dark">Phone Number (10 digits)</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted">+91</span>
+                    <input type="tel" class="form-control rounded-end-3" id="customer_phone" name="customer_phone" 
+                           value="{{ customer_phone|default:'' }}" placeholder="9876543210" required pattern="^[6-9]\d{9}$">
+                </div>
+                <div class="form-text">Used by counters to identify your order if needed.</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="customer_email" class="form-label fw-semibold text-dark">
+                    Email / Gmail <span class="badge bg-light text-secondary border fw-normal">Optional</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+                    <input type="email" class="form-control" id="customer_email" name="customer_email" 
+                           value="{{ customer_email|default:'' }}" placeholder="e.g. riyasharma@gmail.com">
+                </div>
+                <div class="form-text">We'll email you a copy of your pickup code, items, and live tracking link.</div>
+            </div>
+
+            <!-- Payment at Counter Notice -->
+            <div class="alert alert-warning-subtle border border-warning-subtle rounded-3 small mb-4">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-cash-coin fs-4 text-warning"></i>
+                    <div>
+                        <strong>Pay at Counter:</strong> No online payment required now. 
+                        Pay in cash or UPI directly when collecting at each counter.
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submit-order-btn" class="btn btn-warning w-100 fw-bold py-3 fs-6 rounded-3 shadow-sm">
+                Place Pre-Order (₹{{ cart_details.grand_total }})
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

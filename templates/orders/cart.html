@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Pre-Order Cart — CounterConnect{% endblock %}
+
+{% block content %}
+<div class="py-3" style="max-width: 800px; margin: 0 auto;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="fw-bold text-dark mb-0">Cross-Counter Cart</h3>
+            {% if cart_details.location %}
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-geo-alt-fill text-warning me-1"></i>Food Court: <strong>{{ cart_details.location.name }}</strong> ({{ cart_details.location.city }})
+                </p>
+            {% endif %}
+        </div>
+        {% if cart_details.total_quantity > 0 %}
+            <form action="{% url 'orders:cart_clear' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Clear all items from your cart?');">
+                    <i class="bi bi-trash me-1"></i>Clear
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    {% if cart_details.total_quantity == 0 %}
+        <!-- Empty Cart -->
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white my-4">
+            <i class="bi bi-bag-x fs-1 text-muted mb-3 d-block"></i>
+            <h4 class="fw-bold text-dark">Your cart is empty</h4>
+            <p class="text-muted small mb-4">
+                Explore food courts and select items from your favorite counters to build a unified pre-order.
+            </p>
+            <a href="{% url 'catalog:home' %}" class="btn btn-warning fw-semibold px-4 py-2 mx-auto rounded-3">
+                Browse Food Courts
+            </a>
+        </div>
+    {% else %}
+        <!-- Blocked items alert -->
+        {% if cart_details.has_issues %}
+            <div class="alert alert-danger shadow-sm rounded-3 d-flex align-items-center gap-2 mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-4 flex-shrink-0"></i>
+                <div>
+                    <strong>Action Required:</strong>
+                    {% for msg in cart_details.issue_messages %}
+                        <div>{{ msg }}</div>
+                    {% endfor %}
+                    <small class="d-block mt-1">Please remove the unavailable items below to proceed with your order.</small>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Items Grouped by Counter -->
+        <div class="d-flex flex-column gap-3 mb-4">
+            {% for group in cart_details.groups %}
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                    <!-- Counter Header -->
+                    <div class="card-header bg-light border-bottom p-3 d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-dark text-white"><i class="bi bi-shop me-1"></i>Counter</span>
+                            <h5 class="fw-bold mb-0 text-dark">{{ group.business.name }}</h5>
+                            <span class="badge bg-secondary-subtle text-secondary small">{{ group.business.category }}</span>
+                        </div>
+                        <span class="text-muted small">
+                            <i class="bi bi-clock me-1"></i>~{{ group.business.avg_prep_minutes }} mins
+                        </span>
+                    </div>
+
+                    <!-- Items in this Counter -->
+                    <div class="list-group list-group-flush">
+                        {% for line in group.items %}
+                            <div class="list-group-item p-3 d-flex flex-wrap justify-content-between align-items-center gap-2 {% if line.is_blocked %}bg-danger-subtle text-danger-emphasis{% endif %}">
+                                <div style="min-width: 180px;">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        {% if line.item.is_veg %}
+                                            <span class="veg-badge" title="Vegetarian"></span>
+                                        {% else %}
+                                            <span class="non-veg-badge" title="Non-Vegetarian"></span>
+                                        {% endif %}
+                                        <span class="fw-bold text-dark">{{ line.item.name }}</span>
+                                        {% if line.is_blocked %}
+                                            <span class="badge bg-danger">{{ line.block_reason }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-muted small">
+                                        ₹{{ line.unit_price }} each
+                                    </div>
+                                </div>
+
+                                <!-- Quantity Controls & Line Total -->
+                                <div class="d-flex align-items-center gap-3 ms-auto">
+                                    <form action="{% url 'orders:cart_update' %}" method="post" class="d-flex align-items-center gap-1">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="menu_item_id" value="{{ line.item.id }}">
+                                        <div class="input-group input-group-sm" style="width: 110px;">
+                                            <button class="btn btn-outline-secondary" type="submit" name="quantity" value="{{ line.quantity|add:'-1' }}" title="Decrease">
+                                                -
+                                            </button>
+                                            <span class="form-control text-center bg-white border-secondary-subtle fw-bold">{{ line.quantity }}</span>
+                                            <button class="btn btn-outline-secondary" type="submit" name="quantity" value="{{ line.quantity|add:'1' }}" title="Increase" {% if line.quantity >= 10 %}disabled{% endif %}>
+                                                +
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    <div class="text-end" style="min-width: 75px;">
+                                        <span class="fw-bold text-dark">₹{{ line.line_total }}</span>
+                                    </div>
+
+                                    <form action="{% url 'orders:cart_remove' %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="menu_item_id" value="{{ line.item.id }}">
+                                        <button type="submit" class="btn btn-link text-danger p-0 ms-1" title="Remove item">
+                                            <i class="bi bi-x-circle fs-5"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Counter Subtotal Footer -->
+                    <div class="card-footer bg-white border-top p-2 px-3 text-end text-muted small">
+                        Subtotal for {{ group.business.name }}: <strong class="text-dark">₹{{ group.subtotal }}</strong>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Grand Total & Checkout Bar -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <span class="text-muted small d-block">Grand Total ({{ cart_details.total_quantity }} items)</span>
+                    <h3 class="fw-bold text-dark mb-0">₹{{ cart_details.grand_total }}</h3>
+                </div>
+                <div>
+                    {% if cart_details.has_issues %}
+                        <button class="btn btn-secondary px-4 py-2 fw-semibold disabled" disabled title="Remove unavailable items to proceed">
+                            <i class="bi bi-slash-circle me-1"></i>Checkout Blocked
+                        </button>
+                    {% else %}
+                        <a href="/checkout/" class="btn btn-warning px-4 py-2 fw-bold shadow-sm">
+                            Proceed to Checkout <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="text-muted small border-top pt-2">
+                <i class="bi bi-info-circle me-1"></i>Pay in cash or UPI directly at each counter when picking up your food.
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

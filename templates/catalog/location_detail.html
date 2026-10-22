@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ location.name }} — All Counters & Menus | CounterConnect{% endblock %}
+
+{% block content %}
+<div class="pb-5 mb-5">
+    <!-- Breadcrumb / Location Header -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 mb-4 bg-white">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <div>
+                <span class="badge bg-warning-subtle text-dark border border-warning-subtle mb-1">
+                    <i class="bi bi-geo-alt-fill me-1"></i>{{ location.city }}
+                </span>
+                <h2 class="fw-bold mb-1 text-dark">{{ location.name }}</h2>
+                <p class="text-muted small mb-0">{{ location.address }}</p>
+            </div>
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6">
+                <i class="bi bi-check-circle-fill me-1"></i>Live Counters: {{ businesses.count }}
+            </span>
+        </div>
+
+        <!-- Quick Jump Chips -->
+        <div class="category-chips d-flex gap-2 pt-3 border-top mt-2">
+            <span class="text-muted small align-self-center me-1"><i class="bi bi-lightning-charge"></i> Jump to:</span>
+            {% for biz in businesses %}
+                <a href="#counter-{{ biz.id }}" class="badge rounded-pill bg-light text-dark border shadow-sm">
+                    {{ biz.name }} {% if not biz.is_open %}(Closed){% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Counters List -->
+    <div class="d-flex flex-column gap-4">
+        {% for biz in businesses %}
+            <div id="counter-{{ biz.id }}" class="card border-0 shadow-sm rounded-4 overflow-hidden counter-card {% if not biz.is_open %}closed{% endif %}">
+                <!-- Counter Header -->
+                <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h4 class="fw-bold mb-0 text-dark">{{ biz.name }}</h4>
+                            <span class="badge bg-secondary-subtle text-secondary">{{ biz.category }}</span>
+                            {% if not biz.is_open %}
+                                <span class="badge bg-danger">Closed</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success border">Open</span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>Avg prep: approx. {{ biz.avg_prep_minutes }} mins
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Menu Items List -->
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for item in biz.menu_items.all %}
+                            <div class="list-group-item p-3 d-flex justify-content-between align-items-center menu-item-row {% if not item.is_available %}sold-out{% endif %}">
+                                <div class="pe-2">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        {% if item.is_veg %}
+                                            <span class="veg-badge" title="Vegetarian"></span>
+                                        {% else %}
+                                            <span class="non-veg-badge" title="Non-Vegetarian"></span>
+                                        {% endif %}
+                                        <h6 class="fw-bold mb-0 text-dark">{{ item.name }}</h6>
+                                        {% if not item.is_available %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle small">Sold Out</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if item.description %}
+                                        <p class="text-muted small mb-1">{{ item.description }}</p>
+                                    {% endif %}
+                                    <span class="fw-bold text-dark fs-6">₹{{ item.price }}</span>
+                                </div>
+
+                                <div>
+                                    {% if not biz.is_open %}
+                                        <button class="btn btn-outline-secondary btn-sm px-3 disabled" disabled>
+                                            Closed
+                                        </button>
+                                    {% elif not item.is_available %}
+                                        <button class="btn btn-outline-secondary btn-sm px-3 disabled" disabled>
+                                            Sold Out
+                                        </button>
+                                    {% else %}
+                                        <form action="{% url 'orders:cart_add' %}" method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="menu_item_id" value="{{ item.id }}">
+                                            <input type="hidden" name="quantity" value="1">
+                                            <button type="submit" class="btn btn-outline-warning text-dark fw-bold btn-sm px-3 shadow-sm">
+                                                <i class="bi bi-plus-lg me-1"></i>Add
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="p-3 text-center text-muted small">
+                                No menu items currently listed for this counter.
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="card border-0 shadow-sm rounded-4 p-5 text-center text-muted">
+                <i class="bi bi-shop fs-1 mb-2"></i>
+                <p>No counters listed in this food court yet.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Sticky Bottom Cart Bar (if user has items) -->
+{% if cart_for_this_location and cart_item_count > 0 %}
+    <div class="sticky-cart-bar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div>
+                <span class="badge bg-danger rounded-pill fs-6 me-2">{{ cart_item_count }}</span>
+                <span class="fw-semibold text-dark">items in your pre-order</span>
+            </div>
+            <a href="{% url 'orders:cart_view' %}" class="btn btn-warning fw-bold px-4 shadow-sm">
+                View Cart & Order <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

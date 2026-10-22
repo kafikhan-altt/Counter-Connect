@@ -1,0 +1,123 @@
+/* CounterConnect / Localo styles */
+:root {
+    --primary-color: #ff6b35;
+    --dark-bg: #1f2421;
+}
+
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    color: #2b2d42;
+    background-color: #f8f9fa;
+    min-width: 320px;
+}
+
+/* Ensure accessible touch target sizes (min 44px) */
+.btn, .form-control, .nav-link, .input-group-text {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Veg / Non-Veg dot icons */
+.veg-badge, .non-veg-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    vertical-align: middle;
+}
+
+.veg-badge {
+    border: 1.5px solid #28a745;
+}
+.veg-badge::after {
+    content: '';
+    display: block;
+    width: 8px;
+    height: 8px;
+    background-color: #28a745;
+    border-radius: 50%;
+}
+
+.non-veg-badge {
+    border: 1.5px solid #dc3545;
+}
+.non-veg-badge::after {
+    content: '';
+    display: block;
+    width: 8px;
+    height: 8px;
+    background-color: #dc3545;
+    border-radius: 50%;
+}
+
+/* Category chip navigation */
+.category-chips {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.category-chips .badge {
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+/* Counter & Menu Item Cards */
+.counter-card {
+    transition: box-shadow 0.2s ease;
+}
+
+.counter-card.closed {
+    opacity: 0.65;
+    filter: grayscale(40%);
+}
+
+.menu-item-row.sold-out {
+    opacity: 0.6;
+}
+
+/* Sticky cart bar on mobile */
+.sticky-cart-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1020;
+    background: #ffffff;
+    border-top: 1px solid #dee2e6;
+    padding: 10px 16px;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* Pickup code highlight box */
+.pickup-code-display {
+    letter-spacing: 6px;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #ff6b35;
+    background: #fff3e6;
+    border: 2px dashed #ff6b35;
+    border-radius: 12px;
+    padding: 12px 24px;
+    display: inline-block;
+}
+
+/* Responsive adjustments for 360px */
+@media (max-width: 375px) {
+    .pickup-code-display {
+        font-size: 2rem;
+        letter-spacing: 4px;
+        padding: 8px 16px;
+    }
+    .container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Vendor Login — CounterConnect{% endblock %}
+
+{% block content %}
+<div class="py-5" style="max-width: 420px; margin: 0 auto;">
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="text-center mb-4">
+            <span class="badge bg-dark text-warning p-2 rounded-circle mb-2">
+                <i class="bi bi-person-badge fs-3"></i>
+            </span>
+            <h4 class="fw-bold text-dark mb-1">Counter Owner Login</h4>
+            <p class="text-muted small">Sign in to manage your stall's orders and live menu availability.</p>
+        </div>
+
+        <form method="post" action="{% url 'orders:vendor_login' %}">
+            {% csrf_token %}
+            {% if form.errors %}
+                <div class="alert alert-danger small py-2 mb-3">
+                    Invalid username or password. Please try again.
+                </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label for="id_username" class="form-label fw-semibold text-dark">Username</label>
+                <input type="text" name="username" class="form-control rounded-3" id="id_username" 
+                       placeholder="e.g. vendor_south" required autofocus>
+            </div>
+
+            <div class="mb-4">
+                <label for="id_password" class="form-label fw-semibold text-dark">Password</label>
+                <input type="password" name="password" class="form-control rounded-3" id="id_password" 
+                       placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn btn-warning w-100 fw-bold py-2 rounded-3 shadow-sm">
+                Login to Stall Dashboard
+            </button>
+        </form>
+
+        <div class="mt-4 pt-3 border-top text-center text-muted small">
+            <div class="fw-semibold text-dark mb-1">Demo Credentials:</div>
+            <div><code>vendor_south</code>, <code>vendor_chinese</code>, etc.</div>
+            <div>Password: <code>demo12345</code></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
