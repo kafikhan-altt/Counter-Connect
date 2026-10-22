@@ -1,14 +1,13 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Find My Pre-Order — CounterConnect{% endblock %}
+{% block title %}Find My Pre-Order — Localo (CounterConnect){% endblock %}
 
 {% block content %}
 <div class="py-5" style="max-width: 480px; margin: 0 auto;">
-    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-        <div class="text-center mb-4">
-            <span class="badge bg-warning text-dark p-2 rounded-circle mb-2">
-                <i class="bi bi-search fs-3"></i>
-            </span>
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center">
+        <div class="mb-4">
+            <img src="{% static 'images/logo_icon.png' %}" alt="Localo" class="mb-2" style="height: 56px; width: 56px; object-fit: contain;">
             <h4 class="fw-bold text-dark mb-1">Find My Order</h4>
             <p class="text-muted small">
                 Check the live status of today's pre-order using your phone number and 4-character pickup code.

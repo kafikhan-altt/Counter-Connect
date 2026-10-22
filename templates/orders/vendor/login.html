@@ -1,14 +1,13 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Vendor Login — CounterConnect{% endblock %}
+{% block title %}Vendor Login — Localo (CounterConnect){% endblock %}
 
 {% block content %}
 <div class="py-5" style="max-width: 420px; margin: 0 auto;">
-    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-        <div class="text-center mb-4">
-            <span class="badge bg-dark text-warning p-2 rounded-circle mb-2">
-                <i class="bi bi-person-badge fs-3"></i>
-            </span>
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center">
+        <div class="mb-4">
+            <img src="{% static 'images/logo_icon.png' %}" alt="Localo" class="mb-2" style="height: 64px; width: 64px; object-fit: contain;">
             <h4 class="fw-bold text-dark mb-1">Counter Owner Login</h4>
             <p class="text-muted small">Sign in to manage your stall's orders and live menu availability.</p>
         </div>

@@ -1,9 +1,13 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}CounterConnect — Food Court Pre-Ordering{% endblock %}
+{% block title %}Localo (CounterConnect) — Food Court Pre-Ordering{% endblock %}
 
 {% block content %}
 <div class="py-4 text-center">
+    <div class="mb-3">
+        <img src="{% static 'images/logo_icon.png' %}" alt="Localo" style="height: 68px; width: 68px; object-fit: contain;">
+    </div>
     <div class="badge bg-warning text-dark mb-2 px-3 py-2 fs-6 fw-bold">One Location • Every Counter • One Page</div>
     <h1 class="display-6 fw-bold text-dark mb-2">Order from multiple food counters in one go</h1>
     <p class="text-muted lead fs-6 mx-auto mb-4" style="max-width: 580px;">
