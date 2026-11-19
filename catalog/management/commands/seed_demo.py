@@ -19,7 +19,16 @@ class Command(BaseCommand):
         admin_user.is_staff = True
         admin_user.is_superuser = True
         admin_user.save()
-        self.stdout.write(f"Admin user: admin / admin12345 ({'created' if created else 'updated'})")
+
+        admin321_user, created_321 = User.objects.get_or_create(
+            username='admin321',
+            defaults={'email': 'admin321@counterconnect.local', 'is_staff': True, 'is_superuser': True}
+        )
+        admin321_user.set_password('aman121')
+        admin321_user.is_staff = True
+        admin321_user.is_superuser = True
+        admin321_user.save()
+        self.stdout.write(f"Admin user: admin321 / aman121 ({'created' if created_321 else 'updated'})")
 
         # 2. Vendor Users
         vendors_data = [

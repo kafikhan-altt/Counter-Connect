@@ -49,3 +49,7 @@ Cross-counter pre-ordering for independent food courts and local markets.
 ```bash
 python manage.py test
 ```
+
+.\venv\Scripts\activate   # Windows
+
+# or source venv/bin/activate  (Linux/macOS)
