@@ -61,12 +61,41 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'counterconnect.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Database
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    try:
+        import dj_database_url
+        DATABASES = {'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
+    except ImportError:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+elif os.environ.get('VERCEL'):
+    # On Vercel serverless, root filesystem is read-only; /tmp is writable
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': Path('/tmp/db.sqlite3'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+    'https://counter-connect.vercel.app',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+]
 
 AUTH_PASSWORD_VALIDATORS = [
     {
