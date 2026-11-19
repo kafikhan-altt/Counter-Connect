@@ -1,10 +1,27 @@
 import os
 import sys
+import shutil
 import traceback
 from pathlib import Path
-from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'counterconnect.settings')
+
+# Fast 1-millisecond initialization on Vercel: copy pre-seeded template to /tmp
+if os.environ.get('VERCEL') and not os.environ.get('DATABASE_URL'):
+    try:
+        db_file = Path('/tmp/db.sqlite3')
+        if not db_file.exists():
+            template_db = Path(__file__).resolve().parent.parent / 'demo_template.sqlite3'
+            if template_db.exists():
+                shutil.copyfile(template_db, db_file)
+            else:
+                from django.core.management import call_command
+                call_command('migrate', interactive=False)
+                call_command('seed_demo')
+    except Exception as e:
+        print(f"Vercel auto-init note: {e}")
+
+from django.core.wsgi import get_wsgi_application
 
 try:
     _django_app = get_wsgi_application()
@@ -12,17 +29,6 @@ try:
 except Exception:
     _django_app = None
     _startup_error = traceback.format_exc()
-
-# Auto-migrate and seed demo data on Vercel when using /tmp/db.sqlite3
-if os.environ.get('VERCEL') and not os.environ.get('DATABASE_URL'):
-    try:
-        db_file = Path('/tmp/db.sqlite3')
-        if not db_file.exists():
-            from django.core.management import call_command
-            call_command('migrate', interactive=False)
-            call_command('seed_demo')
-    except Exception as e:
-        print(f"Vercel auto-init warning: {e}")
 
 def app(environ, start_response):
     if _startup_error:
