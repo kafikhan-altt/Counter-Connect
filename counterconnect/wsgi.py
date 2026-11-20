@@ -35,6 +35,9 @@ try:
             if 'catalog_location' not in table_names:
                 from django.core.management import call_command
                 call_command('migrate', interactive=False)
+            from catalog.models import Location
+            if not Location.objects.exists():
+                from django.core.management import call_command
                 call_command('seed_demo')
         except Exception as db_err:
             print(f"Cloud DB migration notice: {db_err}")
