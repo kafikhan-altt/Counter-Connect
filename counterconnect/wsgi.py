@@ -30,9 +30,12 @@ try:
     # If connected to cloud PostgreSQL (Supabase), ensure tables and demo data exist
     if os.environ.get('VERCEL') and os.environ.get('DATABASE_URL'):
         try:
-            from django.core.management import call_command
-            call_command('migrate', interactive=False)
-            call_command('seed_demo')
+            from django.db import connection
+            table_names = connection.introspection.table_names()
+            if 'catalog_location' not in table_names:
+                from django.core.management import call_command
+                call_command('migrate', interactive=False)
+                call_command('seed_demo')
         except Exception as db_err:
             print(f"Cloud DB migration notice: {db_err}")
 except Exception:
