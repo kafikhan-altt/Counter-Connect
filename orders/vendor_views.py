@@ -11,6 +11,8 @@ from orders.models import VendorOrder, Order
 
 
 def get_user_businesses(user):
+    if user.is_superuser or user.is_staff:
+        return Business.objects.all()
     return Business.objects.filter(owner=user)
 
 
