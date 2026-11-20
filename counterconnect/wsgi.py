@@ -6,7 +6,7 @@ from pathlib import Path
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'counterconnect.settings')
 
-# Fast 1-millisecond initialization on Vercel: copy pre-seeded template to /tmp
+# Fast 1-millisecond initialization on Vercel for local SQLite fallback: copy pre-seeded template to /tmp
 if os.environ.get('VERCEL') and not os.environ.get('DATABASE_URL'):
     try:
         db_file = Path('/tmp/db.sqlite3')
@@ -26,6 +26,15 @@ from django.core.wsgi import get_wsgi_application
 try:
     _django_app = get_wsgi_application()
     _startup_error = None
+
+    # If connected to cloud PostgreSQL (Supabase), ensure tables and demo data exist
+    if os.environ.get('VERCEL') and os.environ.get('DATABASE_URL'):
+        try:
+            from django.core.management import call_command
+            call_command('migrate', interactive=False)
+            call_command('seed_demo')
+        except Exception as db_err:
+            print(f"Cloud DB migration notice: {db_err}")
 except Exception:
     _django_app = None
     _startup_error = traceback.format_exc()
